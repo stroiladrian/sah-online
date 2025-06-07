@@ -18,7 +18,14 @@ class Engine:
         if platform == 'linux' or platform == 'linux2':
             self.stockfish = Stockfish('./stockfish/stockfish_14_x64')
         elif platform == 'darwin':
-            self.stockfish = Stockfish()
+            try:
+                self.stockfish = Stockfish()
+            except ValueError:
+                # Handle newer Stockfish versions
+                self.stockfish = Stockfish(path='/usr/local/bin/stockfish')
+                # Force version to be compatible and skip version parsing
+                self.stockfish._stockfish_major_version = 17
+                self.stockfish._stockfish_minor_version = 1
 
         with open('./ml/trained_model/dumped_clf.pkl', 'rb') as fid:
             self.classifier = pickle.load(fid)
@@ -48,7 +55,7 @@ class Engine:
             is_ai_white = False
 
         for move in board.legal_moves:
-            if(self.can_checkmate(move, board)): # first we check if there is an istant checkmate
+            if(self.can_checkmate(move, board)): # first we check if there is an istant checkmate
                 return move
 
         # moves_num = len(list(board.legal_moves))
@@ -56,7 +63,7 @@ class Engine:
         evaluation = -999999
         best_move_found = None 
 
-        # Cycling the legal moves, finds the best one
+        # Cycling the legal moves, finds the best one
         start = time.time()
 
         if with_ml:
@@ -81,7 +88,7 @@ class Engine:
         return best_move_found
     
 
-        # # When there are too much moves, depth is decreased to avoid extreme slow down
+        # # When there are too much moves, depth is decreased to avoid extreme slow down
         # if(moves_num > 30):
         #     return self.minimax_starting_point(depth = 3, board = board, is_ai_white = is_ai_white, pure_minimax = True) # more than two is too low, moves are not accurate though
         # elif(moves_num > 10 and moves_num <= 30):
@@ -98,7 +105,7 @@ class Engine:
             is_ai_white = False
 
         for move in board.legal_moves:
-            if(self.can_checkmate(move, board)): # first we check if there is an istant checkmate
+            if(self.can_checkmate(move, board)): # first we check if there is an istant checkmate
                 return move
         
         
@@ -107,7 +114,7 @@ class Engine:
     # def get_board_features(self, board):
     #     board_features = []
     #     for square in chess.SQUARES:
-    #         # R N B K Q P r n b k q p
+    #         # R N B K Q P r n b k q p
     #         piece = {'None': 0, 'R': 1, 'N': 2, 'B': 3, 'K': 4, 'Q': 5, 'P': 6, 'r': 7, 'n': 8, 'b': 9, 'k': 10, 'q': 11, 'p': 12}[str(board.piece_at(square))]
     #         board_features.append(piece)
         
@@ -173,7 +180,7 @@ class Engine:
     #     if len(legal_moves) == 1:
     #         return legal_moves[0]
 
-    #     # Cycling the legal moves, finds the best one
+    #     # Cycling the legal moves, finds the best one
     #     for move in legal_moves:
     #         board.push(move)
     #         value = self.minimax(depth = depth - 1, 
